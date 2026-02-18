@@ -1,298 +1,168 @@
-# 外卖数据看板系统
+# 🍔 外卖数据看板系统
 
-一个完整的外卖数据自动化处理与可视化系统，支持美团、饿了么、京东三个平台的数据清洗、计算、入库和可视化展示。
+一个完整的外卖平台数据自动化处理与可视化系统，支持**美团、饿了么、京东**三个平台的数据清洗、计算、入库和可视化展示。
 
-## 📁 项目文件说明
+---
 
-| 文件名 | 说明 |
-|--------|------|
-| `app.py` | Streamlit数据看板应用 |
-| `daily_orders_schema.sql` | 数据库表结构设计（建表SQL） |
-| `field_mapping.py` | 三平台字段映射字典 |
-| `data_processor.py` | 数据清洗与计算逻辑 |
-| `etl_main.py` | ETL主程序（一键运行） |
-| `requirements.txt` | Python依赖包列表 |
-| `run.sh` | ETL一键启动脚本 |
-| `run_dashboard.sh` | 看板一键启动脚本 |
+## ✨ 核心功能
+
+- 📊 **多平台数据整合**：统一处理美团、饿了么、京东三个平台的数据
+- 🔄 **自动化ETL流程**：一键完成数据提取、清洗、转换、入库
+- 📈 **可视化看板**：基于 Streamlit 的实时数据仪表盘
+- 🏪 **门店映射管理**：自动识别和映射各平台门店名称
+- 🔒 **数据去重机制**：基于唯一约束防止重复导入
+
+---
+
+## 📁 项目结构
+
+```
+ZZDemo/
+├── app.py                          # Streamlit 主看板
+├── pages/                          # 多页面应用
+│   ├── 1_周报数据.py               # 周报数据页
+│   └── store_mapping_simple.py    # 门店映射页
+│
+├── etl/                            # ETL 模块
+│   ├── config/                     # 配置文件
+│   │   ├── config.py              # 统一配置
+│   │   └── daily_orders_schema.sql # 数据库表结构
+│   ├── core/                       # 核心模块
+│   │   ├── etl_main.py            # ETL 主程序
+│   │   ├── field_mapping.py       # 字段映射
+│   │   ├── data_processor.py      # 数据处理
+│   │   └── store_mapper.py        # 门店映射
+│   ├── data/                       # 数据目录
+│   │   └── sources/               # 源数据文件
+│   └── scripts/                    # 工具脚本
+│
+├── docs/                           # 项目文档
+│   ├── quickstart.md              # 快速启动指南
+│   ├── project-specification.md   # 项目规格说明书
+│   └── store-mapping-guide.md     # 门店映射指南
+│
+├── run_etl.py                      # ETL 入口脚本
+├── run_dashboard.sh               # 看板启动脚本
+└── requirements.txt               # Python 依赖
+```
+
+---
 
 ## 🚀 快速开始
 
-### 第一步：准备数据库
-
-1. 登录MySQL数据库
-2. 创建新数据库：
-
-```sql
-CREATE DATABASE waimai_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-```
-
-3. 运行建表SQL：
-
-```bash
-mysql -u root -p waimai_db < daily_orders_schema.sql
-```
-
-### 第二步：安装依赖
+### 1. 安装依赖
 
 ```bash
 pip install -r requirements.txt
 ```
 
-或手动安装：
+### 2. 初始化数据库
 
 ```bash
-pip install pandas sqlalchemy pymysql openpyxl
+mysql -u root -p -e "CREATE DATABASE waimai_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+mysql -u root -p waimai_db < etl/config/daily_orders_schema.sql
 ```
 
-### 第三步：准备Excel文件
+### 3. 配置数据库连接
 
-将您的Excel文件放入项目文件夹：
-
-```
-20260210demo/
-├── meituan.xlsx     # 美团数据
-├── eleme.xlsx       # 饿了么数据
-├── jd.xlsx          # 京东数据
-└── ...
-```
-
-### 第四步：配置数据库连接
-
-打开 `etl_main.py`，修改数据库配置：
-
-```python
-DB_CONFIG = {
-    'host': 'localhost',      # 数据库地址
-    'port': 3306,            # 端口
-    'user': 'root',          # 用户名
-    'password': '123456',     # 密码（请修改）
-    'database': 'waimai_db'  # 数据库名
-}
-```
-
-### 第五步：运行ETL程序
+编辑 `etl/config/config.py` 或设置环境变量：
 
 ```bash
-python etl_main.py
+export DB_PASSWORD=your_password
 ```
 
-### 第六步：启动数据看板
-
-ETL程序运行成功后，即可启动Streamlit数据看板：
-
-#### 方式一：使用启动脚本（推荐）
+### 4. 运行ETL导入数据
 
 ```bash
-./run_dashboard.sh
+python run_etl.py
 ```
 
-#### 方式二：手动启动
+### 5. 启动数据看板
 
 ```bash
 streamlit run app.py
+# 或
+./run_dashboard.sh
 ```
 
-看板将在浏览器中自动打开，默认地址为：`http://localhost:8501`
+访问 http://localhost:8501 查看看板。
 
-### 配置看板数据库连接
+---
 
-在 `app.py` 中修改数据库配置：
+## 📊 数据看板功能
 
-```python
-DB_CONFIG = {
-    'host': 'localhost',      # 数据库地址
-    'port': 3306,            # 端口
-    'user': 'root',          # 用户名
-    'password': 'your_password',  # 密码（请修改）
-    'database': 'waimai_db'  # 数据库名
-}
-```
+### 主页
 
-## 📊 数据处理流程
+- 📅 日期范围筛选
+- 🏪 平台/门店多选
+- 📈 周累计指标卡片（曝光、进店率、下单率、到手率）
+- 📊 周环比对比（订单、实收、到手率）
+- 📉 分平台趋势图
+- 🥧 平台占比分析
 
-1. **读取** - 从Excel文件读取原始数据
-2. **映射** - 根据FIELD_MAPPING重命名列
-3. **补全** - 自动补全缺失的列
-4. **计算** - 计算到手率、真实实收等指标
-5. **清洗** - 处理百分比、格式转换、空值处理
-6. **验证** - 检查数据是否符合表结构
-7. **入库** - 写入MySQL数据库
+### 周报页
 
-## 🎨 数据看板功能
+- 📋 每日汇总表
+- 🏆 门店核心指标
+- 📱 线上过程指标
 
-### 第一阶段：基础框架（当前版本）
+### 门店映射页
 
-✅ **已完成功能**：
+- 🗺️ 品牌门店与平台门店映射关系
+- 📤 映射数据导出
 
-1. **数据库连接**
-   - 使用SQLAlchemy连接MySQL数据库
-   - 智能缓存查询结果（@st.cache_data，10分钟）
-   - 优化数据库连接池配置
+---
 
-2. **页面布局**
-   - 宽屏布局，最大化数据展示空间
-   - 侧边栏筛选器
-   - 响应式设计
+## 🔧 技术栈
 
-3. **数据筛选**
-   - 日期范围选择器（默认最近30天）
-   - 平台多选框（美团、饿了么、京东）
-   - 实时筛选条件展示
+| 类别 | 技术 |
+|------|------|
+| 语言 | Python 3.8+ |
+| 数据处理 | pandas, numpy |
+| 数据库 | MySQL 5.7+, SQLAlchemy, PyMySQL |
+| 前端 | Streamlit, Plotly |
+| Excel处理 | openpyxl |
 
-4. **数据概览**
-   - 实收金额统计
-   - 订单量统计
-   - 到手率分析
-   - 曝光人数统计
-   - 原始数据表格预览
+---
 
-### 即将推出的功能
+## 📖 文档
 
-- 📊 **趋势图表**：营收、订单量等指标的时序趋势
-- 🏆 **平台对比**：多平台横向对比分析
-- 📍 **门店排名**：按各项指标排序
-- 📱 **移动端适配**：优化手机浏览体验
-- 📥 **数据导出**：支持导出筛选后的数据
-- 🔄 **实时刷新**：定时自动刷新数据
+| 文档 | 说明 |
+|------|------|
+| [快速启动指南](docs/quickstart.md) | 快速上手项目 |
+| [项目规格说明书](docs/project-specification.md) | 完整技术文档 |
+| [门店映射指南](docs/store-mapping-guide.md) | 门店映射使用说明 |
 
-### 技术特性
+---
 
-- **性能优化**：查询结果缓存10分钟，减少数据库压力
-- **数据验证**：自动处理空值和异常数据
-- **用户友好**：清晰的提示信息和错误处理
-- **快速响应**：加载状态提示和进度反馈
-
-## 🔧 配置说明
-
-### 文件配置
-
-在 `etl_main.py` 中修改文件路径和表头位置：
-
-```python
-FILES_TO_PROCESS = [
-    ('meituan', 'meituan.xlsx', 0),  # 第三个参数是表头所在行，0表示第一行
-    ('eleme', 'eleme.xlsx', 0),
-    ('jd', 'jd.xlsx', 0),
-]
-```
-
-### 字段映射
-
-在 `field_mapping.py` 中可以查看或修改字段映射关系：
-
-- **Key**: MySQL表字段名
-- **Value**: 平台原始Excel列名
-
-### 计算公式
-
-在 `data_processor.py` 中查看计算逻辑：
-
-- **到手率**: `actual_income / turnover * 100`
-- **真实实收**: `actual_income - promotion_cost`
-- **真实到手率**: `real_actual_income / turnover * 100`
-
-## ⚠️ 常见问题
-
-### 1. ModuleNotFoundError
-
-**问题**: `ModuleNotFoundError: No module named 'pandas'`
-
-**解决**: 安装依赖包
-
-```bash
-pip install -r requirements.txt
-```
-
-### 2. Unknown column 'xxx'
-
-**问题**: 数据库报错"Unknown column 'xxx' in 'field list'"
-
-**解决**:
-- 检查数据库表结构是否正确执行了 `daily_orders_schema.sql`
-- 确认 `field_mapping.py` 中的字段名与数据库一致
-
-### 3. 数据计算结果为0
-
-**问题**: 到手率等计算结果为0
-
-**解决**:
-- 检查Excel中的金额数据格式（不要包含¥符号或逗号）
-- 确认分母字段（turnover）不为0
-
-### 4. 京东订单数为20.0
-
-**问题**: 京东的valid_orders显示为20.0而不是20
-
-**说明**: 程序已自动处理，会强制转换为整数
-
-## 📈 输出示例
+## 📝 数据处理流程
 
 ```
-============================================================
-🍔 外卖数据看板 ETL 主程序
-============================================================
-⏰ 开始时间: 2025-02-10 14:30:00
-
-📡 步骤 1/4: 创建数据库连接...
-✅ 数据库连接成功
-
-📂 步骤 2/4: 读取和处理Excel文件...
-============================================================
-📄 正在读取 meituan 平台数据: meituan.xlsx
-============================================================
-✅ 文件读取成功，共 365 行 80 列
-🔄 开始清洗和计算 meituan 数据...
-✅ meituan 数据清洗完成，共 365 行
-✅ meituan 数据验证通过
-
-...
-
-🔗 步骤 3/4: 合并所有平台数据...
-✅ 数据合并完成，共 1095 行 64 列
-📈 各平台数据量统计:
-   meituan  :   365 行 (33.33%)
-   eleme    :   365 行 (33.33%)
-   jd       :   365 行 (33.33%)
-
-💾 步骤 4/4: 写入数据库...
-📊 DataFrame 当前列名 (64 列):
-   [...]
-✅ 数据写入成功！共写入 1095 行
-
-============================================================
-🎉 ETL 流程完成！
-============================================================
-⏰ 结束时间: 2025-02-10 14:35:00
-📊 总计处理: 1095 条记录
+源数据 (Excel/CSV)
+    ↓
+字段映射 (中文名 → 英文字段)
+    ↓
+数据清洗 (日期、数值、百分比)
+    ↓
+门店映射 (平台门店 → 品牌门店)
+    ↓
+去重检查 (唯一约束)
+    ↓
+入库 (MySQL daily_orders 表)
+    ↓
+可视化 (Streamlit 看板)
 ```
 
-## 📝 数据库表结构
+---
 
-`daily_orders` 表包含63个字段：
+## ⚠️ 开发约定
 
-- **基础信息**: 日期、门店名称、平台
-- **财务指标**: 实收、支出、营业额、顾客实付等
-- **订单统计**: 有效订单、无效订单、取消订单等
-- **转化率**: 入店转化率、下单转化率等
-- **流量数据**: 曝光人数、入店人数、下单人数等
-- **评分数据**: 店铺分、综合体验分、商品满意度等
-- **系统字段**: 导入时间
+- **平台名称**：数据库存储中文名（美团/饿了么/京东）
+- **字段映射**：`英文目标字段 → 中文源列名`，使用时需反转
+- **入库模式**：始终使用 `append`，禁止使用 `replace`
+- **去重策略**：`(date, platform, brand_store_name)` 唯一约束
 
-详细结构请查看 `daily_orders_schema.sql`
-
-## 🛠️ 技术栈
-
-### 后端（ETL）
-- **Python 3.8+**
-- **pandas** - 数据处理
-- **sqlalchemy** - 数据库ORM
-- **pymysql** - MySQL驱动
-- **openpyxl** - Excel读写
-
-### 前端（看板）
-- **Streamlit** - 数据可视化框架
-- **Plotly** - 交互式图表（待集成）
-- **MySQL** - 数据存储
+---
 
 ## 📄 许可证
 
@@ -300,5 +170,6 @@ pip install -r requirements.txt
 
 ---
 
-**创建日期**: 2025-02-10
-**版本**: v1.0
+**创建日期**: 2025-02-10  
+**最后更新**: 2026-02-18  
+**版本**: v1.1
