@@ -1,14 +1,27 @@
 #!/usr/bin/env python3
 """
 检查外卖源数据.xlsx文件的结构和内容
+
+使用方法：
+    cd /path/to/ZZDemo
+    python etl/scripts/check_source_file.py
 """
+
+import sys
+import os
+
+# 添加项目根目录到 Python 路径
+project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+
 import pandas as pd
 
 print('='*80)
 print('检查外卖源数据.xlsx文件')
 print('='*80)
 
-file_path = 'etl/data/sources/目标源数据/外卖源数据.xlsx'
+file_path = os.path.join(project_root, 'etl/data/sources/目标源数据/外卖源数据.xlsx')
 
 # 读取文件
 try:

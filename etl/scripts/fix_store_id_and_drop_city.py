@@ -1,7 +1,20 @@
 #!/usr/bin/env python3
 """
 补全历史数据的store_id并删除city列
+
+使用方法：
+    cd /path/to/ZZDemo
+    python etl/scripts/fix_store_id_and_drop_city.py
 """
+
+import sys
+import os
+
+# 添加项目根目录到 Python 路径
+project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+
 from sqlalchemy import create_engine, text
 from etl.config import get_connection_string
 from etl.core.store_mapper import get_store_mapper

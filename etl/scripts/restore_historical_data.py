@@ -1,7 +1,20 @@
 #!/usr/bin/env python3
 """
 从外卖源数据.xlsx恢复2026-01-11之前的历史数据
+
+使用方法：
+    cd /path/to/ZZDemo
+    python etl/scripts/restore_historical_data.py
 """
+
+import sys
+import os
+
+# 添加项目根目录到 Python 路径
+project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+
 import pandas as pd
 from sqlalchemy import create_engine, text
 from etl.config import get_connection_string
@@ -11,7 +24,7 @@ print('='*80)
 print('从外卖源数据.xlsx恢复历史数据')
 print('='*80)
 
-file_path = 'etl/data/sources/目标源数据/外卖源数据.xlsx'
+file_path = os.path.join(project_root, 'etl/data/sources/目标源数据/外卖源数据.xlsx')
 
 # 读取源数据
 print('\n📄 读取外卖源数据.xlsx...')
