@@ -133,6 +133,11 @@ def process_single_file(platform_name, mapping_key, filepath, header=0):
         df_processed = df.rename(columns=reverse_mapping)
         mapped_count = sum(1 for col in df.columns if col in reverse_mapping)
         print(f"   ✅ 列名映射完成（匹配 {mapped_count}/{len(df.columns)} 列）")
+        unmapped_col = [col for col in df.columns if col not in reverse_mapping]
+        print(f"   ⚠️ 未使用的列名 {unmapped_col}")
+        unmapped_col = [col for col in reverse_mapping if col not in df.columns]
+        print(f"   ⚠️ 未找到的列名 {unmapped_col}")
+
         
         # 门店映射处理
         if 'platform_store_name' in df_processed.columns:
