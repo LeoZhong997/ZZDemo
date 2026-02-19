@@ -316,7 +316,7 @@ else:
         with st.container():
             chart_col1, chart_col2 = st.columns(2)
             with chart_col1:
-                fig_income = px.line(current_df, x='date', y='real_actual_income', color='platform', title='分平台营收趋势', labels={'date': '日期', 'real_actual_income': '真实实收', 'platform': '平台'})
+                fig_income = px.line(current_df, x='date', y='actual_income', color='platform', title='分平台营收趋势', labels={'date': '日期', 'actual_income': '商家实收', 'platform': '平台'})
                 fig_income.update_layout(hovermode='x unified', legend=dict(orientation='h', yanchor='bottom', xanchor='right'), margin=dict(l=0, r=0, t=30, b=30))
                 st.plotly_chart(fig_income, width='stretch', key='tab1_income_chart')
             with chart_col2:
@@ -330,8 +330,8 @@ else:
                 fig_orders_trend.update_layout(hovermode='x unified', legend=dict(orientation='h', yanchor='bottom', xanchor='right'), margin=dict(l=0, r=0, t=30, b=30), yaxis_title='订单数')
                 st.plotly_chart(fig_orders_trend, width='stretch', key='tab1_orders_trend_chart')
             with chart_col2:
-                income_by_platform_tab1 = current_df.groupby('platform')['real_actual_income'].sum().reset_index()
-                fig_pie = px.pie(income_by_platform_tab1, values='real_actual_income', names='platform', title='各平台占比')
+                income_by_platform_tab1 = current_df.groupby('platform')['actual_income'].sum().reset_index()
+                fig_pie = px.pie(income_by_platform_tab1, values='actual_income', names='platform', title='各平台占比')
                 fig_pie.update_layout(margin=dict(l=0, r=0, t=30, b=30))
                 st.plotly_chart(fig_pie, width='stretch', key='tab1_pie_chart')
         with st.container():
@@ -346,8 +346,8 @@ else:
         with st.container():
             pie_col1, pie_col2 = st.columns(2)
             with pie_col1:
-                income_by_platform_tab3 = current_df.groupby('platform')['real_actual_income'].sum().reset_index()
-                fig_pie = px.pie(income_by_platform_tab3, values='real_actual_income', names='platform', title='各平台占比')
+                income_by_platform_tab3 = current_df.groupby('platform')['actual_income'].sum().reset_index()
+                fig_pie = px.pie(income_by_platform_tab3, values='actual_income', names='platform', title='各平台占比')
                 fig_pie.update_layout(margin=dict(l=0, r=0, t=30, b=30))
                 st.plotly_chart(fig_pie, width='stretch', key='tab3_pie_chart')
             with pie_col2:
