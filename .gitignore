@@ -20,6 +20,10 @@ ENV/
 *.xlsx
 *.xls
 !example_*.xlsx
+# 允许 etl/data/sources 目录下的数据文件
+!etl/data/sources/**/*.xlsx
+!etl/data/sources/**/*.xls
+!etl/data/sources/**/*.csv
 
 # Database
 *.db
