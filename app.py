@@ -313,45 +313,59 @@ else:
 
     with tab1:
         st.subheader("每日趋势")
+        
+        # 按日期+平台汇总数据（解决多门店数据显示问题）
+        daily_summary = current_df.groupby(['date', 'platform']).agg({
+            'actual_income': 'sum',
+            'valid_orders': 'sum',
+            'turnover': 'sum'
+        }).reset_index()
+        
         with st.container():
             chart_col1, chart_col2 = st.columns(2)
             with chart_col1:
-                fig_income = px.line(current_df, x='date', y='actual_income', color='platform', title='分平台营收趋势', labels={'date': '日期', 'actual_income': '商家实收', 'platform': '平台'})
+                fig_income = px.line(daily_summary, x='date', y='actual_income', color='platform', title='分平台营收趋势', labels={'date': '日期', 'actual_income': '商家实收', 'platform': '平台'})
                 fig_income.update_layout(hovermode='x unified', legend=dict(orientation='h', yanchor='bottom', xanchor='right'), margin=dict(l=0, r=0, t=30, b=30))
                 st.plotly_chart(fig_income, width='stretch', key='tab1_income_chart')
             with chart_col2:
-                fig_orders = px.line(current_df, x='date', y='valid_orders', color='platform', title='分平台单量趋势', labels={'date': '日期', 'valid_orders': '有效订单', 'platform': '平台'})
+                fig_orders = px.line(daily_summary, x='date', y='valid_orders', color='platform', title='分平台单量趋势', labels={'date': '日期', 'valid_orders': '有效订单', 'platform': '平台'})
                 fig_orders.update_layout(hovermode='x unified', legend=dict(orientation='h', yanchor='bottom', xanchor='right'), margin=dict(l=0, r=0, t=30, b=30))
                 st.plotly_chart(fig_orders, width='stretch', key='tab1_orders_chart')
         with st.container():
             chart_col1, chart_col2 = st.columns(2)
             with chart_col1:
-                fig_orders_trend = px.bar(current_df, x='date', y='valid_orders', color='platform', title='订单趋势', labels={'date': '日期', 'valid_orders': '订单数', 'platform': '平台'})
+                fig_orders_trend = px.bar(daily_summary, x='date', y='valid_orders', color='platform', title='订单趋势', labels={'date': '日期', 'valid_orders': '订单数', 'platform': '平台'})
                 fig_orders_trend.update_layout(hovermode='x unified', legend=dict(orientation='h', yanchor='bottom', xanchor='right'), margin=dict(l=0, r=0, t=30, b=30), yaxis_title='订单数')
                 st.plotly_chart(fig_orders_trend, width='stretch', key='tab1_orders_trend_chart')
             with chart_col2:
-                income_by_platform_tab1 = current_df.groupby('platform')['actual_income'].sum().reset_index()
+                income_by_platform_tab1 = daily_summary.groupby('platform')['actual_income'].sum().reset_index()
                 fig_pie = px.pie(income_by_platform_tab1, values='actual_income', names='platform', title='各平台占比')
                 fig_pie.update_layout(margin=dict(l=0, r=0, t=30, b=30))
                 st.plotly_chart(fig_pie, width='stretch', key='tab1_pie_chart')
         with st.container():
             chart_col1, chart_col2 = st.columns(2)
             with chart_col1:
-                fig_bar = px.bar(current_df, x='date', y='turnover', color='platform', title='营业额趋势', labels={'date': '日期', 'turnover': '营业额', 'platform': '平台'})
+                fig_bar = px.bar(daily_summary, x='date', y='turnover', color='platform', title='营业额趋势', labels={'date': '日期', 'turnover': '营业额', 'platform': '平台'})
                 fig_bar.update_layout(hovermode='x unified', legend=dict(orientation='h', yanchor='bottom', xanchor='right'), margin=dict(l=0, r=0, t=30, b=30), yaxis_title='营业额 (元)')
                 st.plotly_chart(fig_bar, width='stretch', key='tab1_bar_chart')
 
     with tab2:
         st.subheader("平台占比分析")
+        # 按平台汇总数据
+        platform_summary = current_df.groupby('platform').agg({
+            'actual_income': 'sum',
+            'valid_orders': 'sum',
+            'turnover': 'sum'
+        }).reset_index()
+        
         with st.container():
             pie_col1, pie_col2 = st.columns(2)
             with pie_col1:
-                income_by_platform_tab3 = current_df.groupby('platform')['actual_income'].sum().reset_index()
-                fig_pie = px.pie(income_by_platform_tab3, values='actual_income', names='platform', title='各平台占比')
+                fig_pie = px.pie(platform_summary, values='actual_income', names='platform', title='各平台占比')
                 fig_pie.update_layout(margin=dict(l=0, r=0, t=30, b=30))
                 st.plotly_chart(fig_pie, width='stretch', key='tab3_pie_chart')
             with pie_col2:
-                fig_income_by_platform = px.bar(current_df, x='platform', y='actual_income', title='分平台营收', labels={'platform': '平台', 'actual_income': '营收'})
+                fig_income_by_platform = px.bar(platform_summary, x='platform', y='actual_income', title='分平台营收', labels={'platform': '平台', 'actual_income': '营收'})
                 fig_income_by_platform.update_layout(hovermode='x unified', legend=dict(orientation='h', yanchor='bottom', xanchor='right'), margin=dict(l=0, r=0, t=30, b=30))
                 st.plotly_chart(fig_income_by_platform, width='stretch', key='tab3_bar_chart')
         with st.expander("📋 查看原始数据"):
