@@ -33,6 +33,11 @@ ENV/
 # Logs
 *.log
 
+# Environment variables (sensitive)
+.env
+config/.env
+*.env.local
+
 # OS
 .DS_Store
 Thumbs.db
