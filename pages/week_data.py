@@ -6,9 +6,7 @@ from datetime import datetime, timedelta
 import time
 
 # ========== 数据库配置（使用统一配置）==========
-import sys, os
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from config import get_connection_string, ALL_PLATFORMS
+from etl.config import get_connection_string, ALL_PLATFORMS
 
 # ========== 数据库连接 ==========
 @st.cache_resource
@@ -216,7 +214,7 @@ else:
         '实付单均价': st.column_config.NumberColumn('实付单均价', format='%.2f'),
         '无效订单': st.column_config.NumberColumn('无效订单', format='%d')
     }
-    st.dataframe(df_result, width='stretch', hide_index=True, column_config=column_config, height=500)
+    st.dataframe(df_result, use_container_width=True, hide_index=True, column_config=column_config, height=500)
 
     st.markdown("---")
     st.subheader("门店核心指标")
@@ -295,7 +293,7 @@ else:
         '基础营业时长': st.column_config.NumberColumn('基础营业时长', format='%.2f'),
         '差评回复率得分': st.column_config.NumberColumn('差评回复率得分', format='%d')
     }
-    st.dataframe(df_store_result, width='stretch', hide_index=True, column_config=column_config_store, height=400)
+    st.dataframe(df_store_result, use_container_width=True, hide_index=True, column_config=column_config_store, height=400)
 
     st.markdown("---")
     st.subheader("线上过程指标")
@@ -312,6 +310,10 @@ else:
     # 格式化日期
     df_online_agg['date_str'] = pd.to_datetime(df_online_agg['date']).dt.strftime('%Y-%m-%d')
     df_online_agg['weekday'] = pd.to_datetime(df_online_agg['date']).dt.dayofweek.map(weekday_map)
+    
+    # 计算入店转化率和ROI
+    df_online_agg['store_entry_rate'] = (df_online_agg['entry_count'] / df_online_agg['exposure_count'].replace(0, np.nan) * 100).fillna(0)
+    df_online_agg['roi'] = (df_online_agg['real_actual_income'] / df_online_agg['promotion_cost'].replace(0, np.nan)).fillna(0)
     
     total_exposure = df_online['exposure_count'].sum()
     total_entry = df_online['entry_count'].sum()
@@ -351,7 +353,7 @@ else:
         'roi': st.column_config.NumberColumn('ROI', format='%.2f'),
         'uv': st.column_config.NumberColumn('UV', format='%d')
     }
-    st.dataframe(df_online_result, width='stretch', hide_index=True, column_config=column_config_online, height=400)
+    st.dataframe(df_online_result, use_container_width=True, hide_index=True, column_config=column_config_online, height=400)
 
 # 页脚
 st.markdown("---")

@@ -41,3 +41,6 @@ config/.env
 # OS
 .DS_Store
 Thumbs.db
+
+# Temp files (screenshots, etc.)
+temp/

@@ -369,7 +369,7 @@ else:
                 fig_income_by_platform.update_layout(hovermode='x unified', legend=dict(orientation='h', yanchor='bottom', xanchor='right'), margin=dict(l=0, r=0, t=30, b=30))
                 st.plotly_chart(fig_income_by_platform, width='stretch', key='tab3_bar_chart')
         with st.expander("📋 查看原始数据"):
-            st.dataframe(current_df, width='stretch', height=400)
+            st.dataframe(current_df, use_container_width=True, height=400)
 
 # 快速导航
 st.markdown("---")

@@ -7,6 +7,18 @@ import json
 from typing import Dict, Any, Optional
 from pathlib import Path
 
+# ========== 加载 .env 文件 ==========
+# 尝试从 python-dotenv 加载环境变量
+try:
+    from dotenv import load_dotenv
+    # 加载 config/.env 文件
+    config_dir = Path(__file__).parent.parent / 'config'
+    env_file = config_dir / '.env'
+    if env_file.exists():
+        load_dotenv(env_file)
+except ImportError:
+    pass  # 如果没有安装 python-dotenv，跳过
+
 # ========== 项目路径配置 ==========
 CONFIG_DIR = Path(__file__).parent.parent / 'config'
 AI_SETTINGS_FILE = CONFIG_DIR / 'ai_settings.json'
