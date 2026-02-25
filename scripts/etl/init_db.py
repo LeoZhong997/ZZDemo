@@ -43,7 +43,9 @@ def init_database():
             print("⚠️  表 daily_orders 已存在，跳过创建")
         else:
             # 读取 SQL 文件并执行
-            sql_file = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'config', 'daily_orders_schema.sql')
+            # SQL 文件在 etl/config/ 目录下
+            project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+            sql_file = os.path.join(project_root, 'etl', 'config', 'daily_orders_schema.sql')
             print(f"正在从 {sql_file} 读取表结构...")
             
             with open(sql_file, 'r', encoding='utf-8') as f:
