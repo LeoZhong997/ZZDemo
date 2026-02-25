@@ -5,6 +5,7 @@
 - [快速启动指南](../docs/quickstart.md) - 快速上手项目
 - [项目规格说明书](../docs/project-specification.md) - 完整技术文档
 - [门店映射指南](../docs/store-mapping-guide.md) - 门店映射使用说明
+- [ETL脚本工具集](../scripts/etl/README.md) - 脚本工具详细文档
 
 ---
 
@@ -30,19 +31,13 @@ etl/
 │   ├── store_mapper.py        # 门店映射处理
 │   ├── validate_and_import.py # 验证并导入
 │   └── validate_etl_data.py   # ETL数据验证
-├── scripts/                    # 辅助脚本
-│   ├── backup_etl_data.py     # 备份数据
-│   ├── check_missing_columns.py  # 检查缺失列
-│   ├── cleanup_duplicates.py  # 清理重复数据
-│   ├── delete_period_data.py  # 删除时间段数据
-│   ├── fix_conversion_rates.py  # 修复转化率
-│   └── restore_fixed_data.py  # 恢复修复的数据
 ├── data/                       # 数据目录
 │   ├── sources/               # 源数据文件
 │   │   ├── 目标源数据/
 │   │   ├── 下载源文件/
 │   │   └── 目标源文件/
-│   └── backup/                # 备份数据
+│   ├── backup/                # 备份数据
+│   └── exports/               # 导出数据
 ├── logs/                       # 日志文件目录
 └── reports/                    # 报告目录
 ```
@@ -108,19 +103,47 @@ python -m etl.core.etl_main
 
 ## 🛠️ 辅助脚本
 
+辅助脚本已整合到 `scripts/etl/` 目录，提供统一的命令行接口：
+
+### 数据库管理 (db_admin.py)
+
 ```bash
-# 备份数据
-python etl/scripts/backup_etl_data.py
-
-# 清理重复数据
-python etl/scripts/cleanup_duplicates.py
-
-# 删除特定时间段数据
-python etl/scripts/delete_period_data.py
-
-# 修复转化率数据
-python etl/scripts/fix_conversion_rates.py
+python scripts/etl/db_admin.py init                              # 初始化数据库
+python scripts/etl/db_admin.py clear                             # 清空表
+python scripts/etl/db_admin.py delete --start 2026-01-12 --end 2026-01-18
+python scripts/etl/db_admin.py backup --start 2026-01-11 --end 2026-01-18
+python scripts/etl/db_admin.py restore --file backup.csv
 ```
+
+### 数据库检查 (db_check.py)
+
+```bash
+python scripts/etl/db_check.py status      # 检查数据库状态
+python scripts/etl/db_check.py unmapped    # 检查未映射门店
+python scripts/etl/db_check.py verify      # 验证导入结果
+```
+
+### 数据修复 (data_fix.py)
+
+```bash
+python scripts/etl/data_fix.py conversion   # 修复转化率格式
+python scripts/etl/data_fix.py duplicates   # 清理重复数据
+```
+
+### 门店映射 (store_mapping.py)
+
+```bash
+python scripts/etl/store_mapping.py init    # 初始化映射表
+python scripts/etl/store_mapping.py list    # 列出所有映射
+```
+
+### 数据导出 (export.py)
+
+```bash
+python scripts/etl/export.py --start 2026-01-11 --end 2026-01-18
+```
+
+> 📖 详细使用说明请参考 [ETL脚本工具集文档](../scripts/etl/README.md)
 
 ---
 
@@ -156,4 +179,4 @@ python etl/scripts/fix_conversion_rates.py
 
 ---
 
-**最后更新**: 2026-02-18
+**最后更新**: 2026-02-25

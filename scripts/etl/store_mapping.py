@@ -1,16 +1,40 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
-初始化门店映射表
+ETL 门店映射管理脚本
+
+功能：
+    - init: 初始化门店映射表
+    - list: 列出所有映射
+    - add: 添加映射
+
+使用方法：
+    python scripts/etl/store_mapping.py init
+    python scripts/etl/store_mapping.py list
 """
+
 import sys
 import os
+import argparse
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+# 添加项目根目录到 Python 路径
+project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
 
 import pymysql
-from etl.config.config import DB_CONFIG
+from sqlalchemy import create_engine, text
+from etl.config import get_connection_string, DB_CONFIG
+
+
+# ==================== 初始化门店映射表 ====================
 
 def init_store_tables():
     """初始化门店映射表"""
+    print("=" * 60)
+    print("🏪 门店映射表初始化")
+    print("=" * 60)
+    
     connection = pymysql.connect(
         host=DB_CONFIG['host'],
         port=DB_CONFIG['port'],
@@ -24,7 +48,7 @@ def init_store_tables():
     
     try:
         # 1. 创建品牌门店表
-        print("正在创建 brand_stores 表...")
+        print("\n正在创建 brand_stores 表...")
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS brand_stores (
                 id INT AUTO_INCREMENT PRIMARY KEY COMMENT '主键ID',
@@ -68,10 +92,10 @@ def init_store_tables():
         # 3. 检查是否已有数据
         cursor.execute("SELECT COUNT(*) FROM brand_stores")
         if cursor.fetchone()[0] > 0:
-            print("⚠️  brand_stores 表已有数据，跳过插入")
+            print("\n⚠️  brand_stores 表已有数据，跳过插入")
         else:
             # 插入品牌门店数据
-            print("正在插入品牌门店数据...")
+            print("\n正在插入品牌门店数据...")
             stores = [
                 ('信和店', '深圳市南山区信和广场', '直营店', '0755-12345678', '营业中'),
                 ('龙华店', '深圳市龙华区龙华大道', '直营店', '0755-12345679', '营业中'),
@@ -100,14 +124,14 @@ def init_store_tables():
         # 4. 检查 store_mapping 是否已有数据
         cursor.execute("SELECT COUNT(*) FROM store_mapping")
         if cursor.fetchone()[0] > 0:
-            print("⚠️  store_mapping 表已有数据，跳过插入")
+            print("\n⚠️  store_mapping 表已有数据，跳过插入")
         else:
             # 获取门店 ID 映射
             cursor.execute("SELECT id, brand_store_name FROM brand_stores")
             store_ids = {row[1]: row[0] for row in cursor.fetchall()}
             
             # 插入门店映射数据
-            print("正在插入门店映射数据...")
+            print("\n正在插入门店映射数据...")
             mappings = [
                 # 美团
                 ('信和店', '美团', '雪乡情大地锅(信和广场店)'),
@@ -128,19 +152,6 @@ def init_store_tables():
                 ('车公庙店', '京东', '念东北铁锅炖（车公庙店）'),
                 ('马家龙店', '京东', '念东北铁锅炖（马家龙店）'),
                 ('长兴店', '京东', '念东北铁锅炖（长兴店）'),
-                ('车公庙店', '京东', '雪乡情东北菜（车公庙店）'),
-                ('大冲店', '京东', '雪乡情东北菜（大冲店）'),
-                ('登良店', '京东', '雪乡情东北菜（登良旗舰店）'),
-                ('皇庭店', '京东', '雪乡情东北菜（皇庭广场店）'),
-                ('马家龙店', '京东', '雪乡情东北菜（马家龙店）'),
-                ('梅林店', '京东', '雪乡情东北菜（梅林店）'),
-                ('蛇口店', '京东', '雪乡情东北菜（蛇口店）'),
-                ('塘朗店', '京东', '雪乡情东北菜（塘朗店）'),
-                ('新洲店', '京东', '雪乡情东北菜（新洲店）'),
-                ('壹方城店', '京东', '雪乡情东北菜（壹方城店）'),
-                ('壹方天地店', '京东', '雪乡情东北菜（壹方天地店）'),
-                ('后海店', '京东', '雪乡情铁锅炖（后海店）'),
-                ('信和店', '京东', '雪乡情铁锅炖（信和广场店）'),
                 # 饿了么
                 ('车公庙店', '饿了么', '雪乡情东北菜(车公庙店)'),
                 ('大冲店', '饿了么', '雪乡情东北菜(大冲店)'),
@@ -167,7 +178,7 @@ def init_store_tables():
                         """, (store_ids[brand_name], platform, platform_name))
                         inserted += 1
                     except pymysql.err.IntegrityError:
-                        pass  # 跳过重复记录
+                        pass
             print(f"✅ 已插入 {inserted} 条门店映射数据")
         
         connection.commit()
@@ -182,13 +193,62 @@ def init_store_tables():
         connection.close()
 
 
-if __name__ == "__main__":
-    print("=" * 50)
-    print("门店映射表初始化")
-    print("=" * 50)
+# ==================== 列出映射 ====================
+
+def list_mappings():
+    """列出所有门店映射"""
+    print("=" * 60)
+    print("📋 门店映射列表")
+    print("=" * 60)
     
-    try:
+    engine = create_engine(get_connection_string(), echo=False)
+    
+    with engine.connect() as conn:
+        # 按平台统计
+        stats_query = text("""
+            SELECT platform, COUNT(*) as count
+            FROM store_mapping
+            GROUP BY platform
+        """)
+        print("\n📊 各平台映射数量:")
+        for row in conn.execute(stats_query):
+            print(f"   {row.platform}: {row.count} 条")
+        
+        # 列出所有映射
+        list_query = text("""
+            SELECT bs.brand_store_name, sm.platform, sm.platform_store_name
+            FROM store_mapping sm
+            JOIN brand_stores bs ON sm.brand_store_id = bs.id
+            ORDER BY sm.platform, bs.brand_store_name
+        """)
+        print("\n📋 映射详情:")
+        print(f"   {'品牌门店':<15} {'平台':<8} {'平台门店名称'}")
+        print("   " + "-" * 60)
+        for row in conn.execute(list_query):
+            print(f"   {row.brand_store_name:<15} {row.platform:<8} {row.platform_store_name[:40]}")
+
+
+# ==================== 主函数 ====================
+
+def main():
+    parser = argparse.ArgumentParser(description='ETL 门店映射管理工具')
+    subparsers = parser.add_subparsers(dest='command', help='可用命令')
+    
+    # init 命令
+    subparsers.add_parser('init', help='初始化门店映射表')
+    
+    # list 命令
+    subparsers.add_parser('list', help='列出所有映射')
+    
+    args = parser.parse_args()
+    
+    if args.command == 'init':
         init_store_tables()
-    except Exception as e:
-        print(f"\n❌ 初始化失败: {e}")
-        sys.exit(1)
+    elif args.command == 'list':
+        list_mappings()
+    else:
+        parser.print_help()
+
+
+if __name__ == '__main__':
+    main()
