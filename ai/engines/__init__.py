@@ -4,11 +4,14 @@ AI 功能引擎模块
 """
 
 from ai.engines.diagnosis_engine import DiagnosisEngine, generate_diagnosis, quick_diagnosis
+from ai.engines.deep_diagnosis_engine import DeepDiagnosisEngine, generate_deep_diagnosis
 
 __all__ = [
     'DiagnosisEngine',
     'generate_diagnosis',
     'quick_diagnosis',
+    'DeepDiagnosisEngine',
+    'generate_deep_diagnosis',
     # 以下引擎将在后续阶段实现
     # 'PredictionEngine',
     # 'QAEngine',

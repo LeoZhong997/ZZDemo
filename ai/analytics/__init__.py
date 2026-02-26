@@ -1,6 +1,6 @@
 """
 AI 分析模块
-提供数据聚合、特征计算、异常检测、时间序列分析功能
+提供数据聚合、特征计算、异常检测、时间序列分析、红线检测、健康度分析功能
 """
 
 from ai.analytics.data_aggregator import (
@@ -27,6 +27,22 @@ from ai.analytics.time_series import (
     analyze_time_series
 )
 
+from ai.analytics.redline_detector import (
+    RedlineDetector,
+    detect_redlines,
+    REDLINE_RULES,
+    SEVERITY_WEIGHTS,
+    SEVERITY_ICONS
+)
+
+from ai.analytics.health_analyzer import (
+    HealthAnalyzer,
+    analyze_store_health,
+    HEALTH_SCORE_WEIGHTS,
+    TRAFFIC_LIGHT_THRESHOLDS,
+    INDUSTRY_BENCHMARKS
+)
+
 
 __all__ = [
     # 数据聚合
@@ -47,5 +63,19 @@ __all__ = [
     
     # 时间序列
     'TimeSeriesAnalyzer',
-    'analyze_time_series'
+    'analyze_time_series',
+    
+    # 红线检测
+    'RedlineDetector',
+    'detect_redlines',
+    'REDLINE_RULES',
+    'SEVERITY_WEIGHTS',
+    'SEVERITY_ICONS',
+    
+    # 健康度分析
+    'HealthAnalyzer',
+    'analyze_store_health',
+    'HEALTH_SCORE_WEIGHTS',
+    'TRAFFIC_LIGHT_THRESHOLDS',
+    'INDUSTRY_BENCHMARKS'
 ]

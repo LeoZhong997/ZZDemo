@@ -1,6 +1,6 @@
 """
 AI 经营诊断报告页面
-提供智能诊断报告生成功能
+提供智能诊断报告生成功能（包含深度诊断和事件输入）
 """
 import streamlit as st
 import pandas as pd
@@ -15,10 +15,14 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from etl.config.config import get_connection_string, ALL_PLATFORMS
 from ai.engines.diagnosis_engine import DiagnosisEngine
+from ai.engines.deep_diagnosis_engine import DeepDiagnosisEngine, generate_deep_diagnosis
 from ai.core.llm_adapter import get_llm_adapter
 from ai.config import get_ai_config, validate_ai_config
 from ai.analytics.data_aggregator import DataAggregator
 from ai.analytics.anomaly_detector import AnomalyDetector
+from ai.analytics.redline_detector import RedlineDetector
+from ai.analytics.health_analyzer import HealthAnalyzer
+from ai.events.event_manager import EventManager, PRESET_EVENTS
 
 
 # ========== 页面配置 ==========
@@ -226,9 +230,9 @@ else:
     platform_comparison = aggregator.aggregate_by_platform(df)
     anomalies = detector.detect(df)
     
-    # 使用 tabs 并排展示三个模块
-    tab1, tab2, tab3 = st.tabs([
-        "📊 门店排名", "📈 平台对比", "⚠️ 异常告警"
+    # 使用 tabs 并排展示模块
+    tab1, tab2, tab3, tab4, tab5 = st.tabs([
+        "📊 门店排名", "📈 平台对比", "⚠️ 异常告警", "🔴 红线检测", "💚 健康度"
     ])
     
     # Tab 1: 门店排名
@@ -350,6 +354,162 @@ else:
                     st.info(message)
         else:
             st.success("✅ 未检测到明显异常")
+    
+    # Tab 4: 红线检测
+    with tab4:
+        st.subheader("🔴 红线指标检测")
+        st.markdown("检测影响平台权重和排名的关键违规指标")
+        
+        redline_detector = RedlineDetector()
+        redline_result = redline_detector.detect_all(df)
+        
+        if redline_result.get('success'):
+            summary = redline_result.get('summary', {})
+            
+            # 概览
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                st.metric("违规总数", summary.get('total', 0))
+            with col2:
+                high_count = summary.get('by_severity', {}).get('high', 0)
+                st.metric("🔴 高严重度", high_count)
+            with col3:
+                medium_count = summary.get('by_severity', {}).get('medium', 0)
+                st.metric("🟡 中严重度", medium_count)
+            
+            # 高风险门店
+            high_risk = redline_result.get('high_risk_stores', [])
+            if high_risk:
+                st.markdown("#### ⚠️ 高风险门店")
+                for store in high_risk[:5]:
+                    # 获取该门店的所有违规
+                    violations = redline_result['by_store'].get(store['store'], [])
+                    all_issue_names = [v['name'] for v in violations]
+                    
+                    with st.expander(f"{store['store']} - 风险分数: {store['risk_score']}", expanded=False):
+                        # 显示所有问题
+                        st.markdown(f"**所有问题**: {', '.join(all_issue_names)}")
+                        st.markdown(f"**高严重度违规**: {'是' if store['has_high_severity'] else '否'}")
+                        
+                        # 显示详细违规（包含风险分数）
+                        if violations:
+                            st.markdown("**详细违规:**")
+                            for v in violations:
+                                icon = "🔴" if v['severity'] == 'high' else ("🟡" if v['severity'] == 'medium' else "🟢")
+                                risk_score = v.get('risk_score', 1)
+                                desc = v.get('description', '')
+                                st.markdown(f"{icon} **{v['name']}**: {desc}，风险分数={risk_score}")
+            else:
+                st.success("✅ 未检测到高风险门店")
+        else:
+            st.info("暂无红线检测数据")
+    
+    # Tab 5: 健康度
+    with tab5:
+        st.subheader("💚 门店健康度分析")
+        st.markdown("综合评估各门店的营收、合规、口碑和效率")
+        
+        health_analyzer = HealthAnalyzer()
+        health_result = health_analyzer.generate_all_stores_report(df)
+        
+        if health_result.get('success'):
+            # 信号灯分布
+            dist = health_result.get('traffic_light_distribution', {})
+            avg_score = health_result.get('average_health_score', 0)
+            
+            col1, col2, col3, col4 = st.columns(4)
+            with col1:
+                st.metric("🟢 健康", dist.get('green', 0))
+            with col2:
+                st.metric("🟡 需关注", dist.get('yellow', 0))
+            with col3:
+                st.metric("🔴 高危", dist.get('red', 0))
+            with col4:
+                st.metric("平均健康度", f"{avg_score:.1f}")
+            
+            # 门店排名
+            ranking = health_result.get('store_ranking', [])
+            if ranking:
+                st.markdown("#### 📊 门店健康度排名")
+                
+                ranking_df = pd.DataFrame(ranking)
+                display_cols = ['brand_store_name', 'health_score', 'traffic_light']
+                ranking_display = ranking_df[display_cols].copy()
+                ranking_display.columns = ['门店', '健康度分数', '状态']
+                
+                # 格式化
+                ranking_display['健康度分数'] = ranking_display['健康度分数'].apply(lambda x: f"{x:.1f}")
+                
+                st.dataframe(ranking_display.head(15), use_container_width=True, hide_index=True)
+            
+            # 高危门店详情
+            high_risk = health_result.get('high_risk_stores', [])
+            if high_risk:
+                st.markdown("#### 🔴 高危门店")
+                for store in high_risk[:3]:
+                    st.warning(f"**{store['brand_store_name']}** - 健康度: {store['health_score']:.1f}")
+        else:
+            st.info("暂无健康度分析数据")
+    
+    st.markdown("---")
+    
+    # ========== 事件输入区域 ==========
+    st.markdown("### 📝 特殊事件/备注")
+    st.markdown("记录本周的特殊事件，AI 将在分析时考虑这些因素")
+    
+    event_manager = EventManager()
+    
+    # 事件输入表单
+    with st.expander("➕ 添加事件", expanded=False):
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            event_store = st.selectbox("门店", ["全局"] + store_list, key="event_store")
+            event_date = st.date_input("日期", value=end_date, key="event_date")
+        
+        with col2:
+            event_type = st.selectbox(
+                "事件类型",
+                options=list(PRESET_EVENTS.keys()),
+                format_func=lambda x: PRESET_EVENTS[x]['name'],
+                key="event_type"
+            )
+            
+            # 根据类型显示预设选项
+            preset_options = PRESET_EVENTS.get(event_type, {}).get('options', [])
+            event_preset = st.selectbox("快速选择", ["自定义"] + preset_options, key="event_preset")
+        
+        if event_preset != "自定义":
+            event_desc = st.text_input("事件描述", value=event_preset, key="event_desc")
+        else:
+            event_desc = st.text_input("事件描述", placeholder="例如：因暴雨导致配送延迟...", key="event_desc_custom")
+        
+        if st.button("添加事件", type="secondary"):
+            if event_desc or event_preset != "自定义":
+                result = event_manager.add_event(
+                    store_name=event_store if event_store != "全局" else None,
+                    date_str=str(event_date),
+                    event_type=event_type,
+                    description=event_desc or event_preset
+                )
+                if result.get('success'):
+                    st.success(f"✅ 事件添加成功！")
+                    st.rerun()
+                else:
+                    st.error(f"❌ {result.get('error', '添加失败')}")
+            else:
+                st.warning("请输入事件描述")
+    
+    # 显示已有事件
+    existing_events = event_manager.get_events(str(start_date), str(end_date))
+    if existing_events:
+        st.markdown(f"**已记录事件 ({len(existing_events)} 条)**")
+        for event in existing_events[:5]:
+            store_text = event.get('store_name', '全局')
+            event_text = f"- [{event.get('date', '')}] **{store_text}**: {event.get('description', '')}"
+            st.markdown(event_text)
+    else:
+        st.info("暂无记录的事件")
     
     st.markdown("---")
     

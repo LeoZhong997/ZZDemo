@@ -1,0 +1,31 @@
+{
+  "2026-01-18": [
+    {
+      "id": "evt_20260226092622_2312b0",
+      "store_name": "全局",
+      "date": "2026-01-18",
+      "event_type": "promotion",
+      "description": "测试事件：春节期间订单量激增",
+      "created_at": "2026-02-26T09:26:22.790040",
+      "custom_data": {}
+    },
+    {
+      "id": "evt_20260226101052_c61810",
+      "store_name": "信和店",
+      "date": "2026-01-18",
+      "event_type": "promotion",
+      "description": "开启新活动",
+      "created_at": "2026-02-26T10:10:52.177698",
+      "custom_data": {}
+    },
+    {
+      "id": "evt_20260226101106_91453b",
+      "store_name": "壹方城店",
+      "date": "2026-01-18",
+      "event_type": "operation",
+      "description": "系统升级",
+      "created_at": "2026-02-26T10:11:06.145016",
+      "custom_data": {}
+    }
+  ]
+}
