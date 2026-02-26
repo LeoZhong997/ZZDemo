@@ -5,15 +5,28 @@ AI 功能引擎模块
 
 from ai.engines.diagnosis_engine import DiagnosisEngine, generate_diagnosis, quick_diagnosis
 from ai.engines.deep_diagnosis_engine import DeepDiagnosisEngine, generate_deep_diagnosis
+from ai.engines.prediction_engine import (
+    PredictionEngine,
+    predict_revenue,
+    analyze_trend,
+    predict_by_store
+)
 
 __all__ = [
+    # 诊断引擎
     'DiagnosisEngine',
     'generate_diagnosis',
     'quick_diagnosis',
     'DeepDiagnosisEngine',
     'generate_deep_diagnosis',
+    
+    # 预测引擎
+    'PredictionEngine',
+    'predict_revenue',
+    'analyze_trend',
+    'predict_by_store',
+    
     # 以下引擎将在后续阶段实现
-    # 'PredictionEngine',
     # 'QAEngine',
     # 'SuggestionEngine',
 ]

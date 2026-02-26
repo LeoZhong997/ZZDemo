@@ -27,6 +27,48 @@ class TimeSeriesAnalyzer:
         """初始化时间序列分析器"""
         self.config = get_ai_config('analysis', {})
     
+    def _ensure_derived_metric(self, df: pd.DataFrame, metric: str) -> pd.DataFrame:
+        """
+        确保衍生指标存在，如果不存在则计算
+        
+        Args:
+            df: 原始数据
+            metric: 需要的指标名
+            
+        Returns:
+            添加了衍生指标的数据
+        """
+        df = df.copy()
+        
+        # 到手率/利润率相关指标
+        margin_metrics = ['net_margin_rate', 'margin_rate', 'profit_rate', 'real_net_margin_rate']
+        
+        if metric in margin_metrics:
+            # 检查列是否已存在且有效数据不为空
+            if metric in df.columns:
+                valid_count = df[metric].notna().sum()
+                if valid_count > 0:
+                    return df  # 数据已存在且有效
+            
+            # 尝试从 actual_income 和 turnover (营业额) 计算
+            if 'actual_income' in df.columns and 'turnover' in df.columns:
+                df[metric] = df.apply(
+                    lambda row: (row['actual_income'] / row['turnover'] * 100)
+                    if pd.notna(row.get('turnover')) and row.get('turnover', 0) > 0 
+                    else np.nan,
+                    axis=1
+                )
+            # 备选：从 actual_income 和 platform_revenue 计算
+            elif 'actual_income' in df.columns and 'platform_revenue' in df.columns:
+                df[metric] = df.apply(
+                    lambda row: (row['actual_income'] / row['platform_revenue'] * 100)
+                    if pd.notna(row.get('platform_revenue')) and row.get('platform_revenue', 0) > 0 
+                    else np.nan,
+                    axis=1
+                )
+        
+        return df
+    
     def aggregate_daily(self, df: pd.DataFrame,
                         metric: str = 'actual_income',
                         date_col: str = 'date') -> pd.DataFrame:
@@ -47,8 +89,34 @@ class TimeSeriesAnalyzer:
         df = df.copy()
         df[date_col] = pd.to_datetime(df[date_col])
         
-        daily = df.groupby(date_col)[metric].sum().reset_index()
+        # 确保衍生指标存在
+        df = self._ensure_derived_metric(df, metric)
+        
+        # 根据指标类型选择聚合方式
+        # 百分比类型和比率类型使用 mean，其他使用 sum
+        mean_metrics = [
+            'net_margin_rate', 'real_net_margin_rate',  # 到手率
+            'merchant_cancellation_rate',  # 取消率
+            'store_entry_rate', 'order_conversion_rate',  # 转化率
+            'new_customer_entry_rate', 'new_customer_order_rate',
+            'old_customer_entry_rate', 'old_customer_order_rate',
+            'repurchase_rate',  # 复购率
+            'store_score',  # 评分
+            'avg_paid_price',  # 均价
+        ]
+        
+        # 检查是否为百分比/比率类型指标
+        is_rate_metric = any(rate_key in metric.lower() for rate_key in ['rate', 'score', 'avg'])
+        if metric in mean_metrics or is_rate_metric:
+            agg_func = 'mean'
+        else:
+            agg_func = 'sum'
+        
+        daily = df.groupby(date_col)[metric].agg(agg_func).reset_index()
         daily = daily.sort_values(date_col)
+        
+        # 处理 NaN 值
+        daily = daily.dropna(subset=[metric])
         
         # 添加日期特征
         daily['day_of_week'] = daily[date_col].dt.dayofweek

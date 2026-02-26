@@ -10,3 +10,8 @@ plotly>=5.18.0
 # AI 模块依赖
 openai>=1.0.0
 requests>=2.28.0
+
+# 测试依赖
+pytest>=7.0.0
+pytest-cov>=4.0.0
+playwright>=1.40.0
